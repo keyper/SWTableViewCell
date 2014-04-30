@@ -43,4 +43,6 @@ typedef NS_ENUM(NSInteger, SWCellState)
 
 - (void)hideUtilityButtonsAnimated:(BOOL)animated;
 
+- (void)showRightUtilityButtonsAnimated:(BOOL)animated;
+
 @end

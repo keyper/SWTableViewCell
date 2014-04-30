@@ -408,6 +408,18 @@
     }
 }
 
+- (void)showRightUtilityButtonsAnimated:(BOOL)animated
+{
+    if (_cellState != kCellStateRight)
+    {
+        [self.cellScrollView setContentOffset:[self contentOffsetForCellState:kCellStateRight] animated:animated];
+        
+        if ([self.delegate respondsToSelector:@selector(swipeableTableViewCell:scrollingToState:)])
+        {
+            [self.delegate swipeableTableViewCell:self scrollingToState:kCellStateRight];
+        }
+    }
+}
 
 #pragma mark - Geometry helpers
 
