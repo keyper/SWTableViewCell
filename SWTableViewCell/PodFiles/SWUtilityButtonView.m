@@ -112,7 +112,7 @@
                                                                        views:NSDictionaryOfVariableBindings(precedingView)]];
     }
 
-    self.widthConstraint.constant = (kUtilityButtonWidthDefault * utilityButtons.count);
+    self.widthConstraint.constant = (self.class.utilityButtonWidthDefault * utilityButtons.count);
     
     [self setNeedsLayout];
 
@@ -142,6 +142,11 @@
     }
     
     self.buttonBackgroundColors = nil;
+}
+
++ (CGFloat)utilityButtonWidthDefault
+{
+    return 60.f;
 }
 
 @end

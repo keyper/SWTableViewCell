@@ -9,8 +9,6 @@
 #import <UIKit/UIKit.h>
 @class SWTableViewCell;
 
-#define kUtilityButtonWidthDefault 90
-
 @interface SWUtilityButtonView : UIView
 
 - (id)initWithUtilityButtons:(NSArray *)utilityButtons parentCell:(SWTableViewCell *)parentCell utilityButtonSelector:(SEL)utilityButtonSelector;
@@ -22,5 +20,7 @@
 
 - (void)pushBackgroundColors;
 - (void)popBackgroundColors;
+
++ (CGFloat)utilityButtonWidthDefault;
 
 @end
