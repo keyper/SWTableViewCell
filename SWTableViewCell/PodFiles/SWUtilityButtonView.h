@@ -17,10 +17,9 @@
 @property (nonatomic, weak, readonly) SWTableViewCell *parentCell;
 @property (nonatomic, copy) NSArray *utilityButtons;
 @property (nonatomic, assign) SEL utilityButtonSelector;
+@property (nonatomic, strong) NSNumber *utilityButtonWidth;
 
 - (void)pushBackgroundColors;
 - (void)popBackgroundColors;
-
-+ (CGFloat)utilityButtonWidthDefault;
 
 @end

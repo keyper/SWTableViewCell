@@ -9,7 +9,9 @@
 #import "SWUtilityButtonView.h"
 #import "SWUtilityButtonTapGestureRecognizer.h"
 
-@interface SWUtilityButtonView()
+@interface SWUtilityButtonView() {
+    NSNumber *_utilityButtonWidth;
+}
 
 @property (nonatomic, strong) NSLayoutConstraint *widthConstraint;
 @property (nonatomic, strong) NSMutableArray *buttonBackgroundColors;
@@ -33,7 +35,7 @@
     
     if (self) {
         self.translatesAutoresizingMaskIntoConstraints = NO;
-
+        
         self.widthConstraint = [NSLayoutConstraint constraintWithItem:self
                                                             attribute:NSLayoutAttributeWidth
                                                             relatedBy:NSLayoutRelationEqual
@@ -62,7 +64,7 @@
     }
     
     _utilityButtons = [utilityButtons copy];
-
+    
     if (utilityButtons.count)
     {
         NSUInteger utilityButtonsCounter = 0;
@@ -72,7 +74,7 @@
         {
             [self addSubview:button];
             button.translatesAutoresizingMaskIntoConstraints = NO;
-
+            
             if (!precedingView)
             {
                 // First button; pin it to the left edge.
@@ -95,27 +97,27 @@
                                                                          metrics:nil
                                                                            views:NSDictionaryOfVariableBindings(button)]];
             
-
+            
             SWUtilityButtonTapGestureRecognizer *utilityButtonTapGestureRecognizer = [[SWUtilityButtonTapGestureRecognizer alloc] initWithTarget:_parentCell
                                                                                                                                           action:_utilityButtonSelector];
             utilityButtonTapGestureRecognizer.buttonIndex = utilityButtonsCounter;
             [button addGestureRecognizer:utilityButtonTapGestureRecognizer];
-
+            
             utilityButtonsCounter++;
             precedingView = button;
         }
-
+        
         // Pin the last button to the right edge.
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"[precedingView]|"
                                                                      options:0L
                                                                      metrics:nil
                                                                        views:NSDictionaryOfVariableBindings(precedingView)]];
     }
-
-    self.widthConstraint.constant = (self.class.utilityButtonWidthDefault * utilityButtons.count);
+    
+    self.widthConstraint.constant = (self.utilityButtonWidth.floatValue * utilityButtons.count);
     
     [self setNeedsLayout];
-
+    
     return;
 }
 
@@ -144,9 +146,20 @@
     self.buttonBackgroundColors = nil;
 }
 
-+ (CGFloat)utilityButtonWidthDefault
+- (NSNumber *)utilityButtonWidth
 {
-    return 60.f;
+    return _utilityButtonWidth ?: SWUtilityButtonView.utilityButtonWidthDefault;
+}
+
+- (void)setUtilityButtonWidth:(NSNumber *)utilityButtonWidth {
+    _utilityButtonWidth = utilityButtonWidth;
+    
+    self.widthConstraint.constant = (self.utilityButtonWidth.floatValue * self.utilityButtons.count);
+}
+
++ (NSNumber *)utilityButtonWidthDefault
+{
+    return @(60.f);
 }
 
 @end

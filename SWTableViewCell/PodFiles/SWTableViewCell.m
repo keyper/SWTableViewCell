@@ -28,6 +28,9 @@
 @property (nonatomic, strong) UILongPressGestureRecognizer *longPressGestureRecognizer;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGestureRecognizer;
 
+@property (nonatomic, copy) NSArray *buttonViewWidthConstraints;
+@property (nonatomic, copy) NSArray *buttonViews;
+
 - (CGFloat)leftUtilityButtonsWidth;
 - (CGFloat)rightUtilityButtonsWidth;
 - (CGFloat)utilityButtonsPadding;
@@ -95,6 +98,8 @@
 
 - (void)initializer
 {
+    self.buttonViewWidthConstraints = @[];
+    
     // Set up scroll view that will host our cell content
     self.cellScrollView = [[SWCellScrollView alloc] init];
     self.cellScrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -144,14 +149,14 @@
     
     UIView *clipViews[] = { self.leftUtilityClipView, self.rightUtilityClipView };
     NSLayoutConstraint *clipConstraints[] = { self.leftUtilityClipConstraint, self.rightUtilityClipConstraint };
-    UIView *buttonViews[] = { self.leftUtilityButtonsView, self.rightUtilityButtonsView };
+    self.buttonViews = @[self.leftUtilityButtonsView, self.rightUtilityButtonsView];
     NSLayoutAttribute alignmentAttributes[] = { NSLayoutAttributeLeft, NSLayoutAttributeRight };
     
     for (NSUInteger i = 0; i < 2; ++i)
     {
         UIView *clipView = clipViews[i];
         NSLayoutConstraint *clipConstraint = clipConstraints[i];
-        UIView *buttonView = buttonViews[i];
+        SWUtilityButtonView *buttonView = (SWUtilityButtonView *)self.buttonViews[i];
         NSLayoutAttribute alignmentAttribute = alignmentAttributes[i];
         
         clipView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -167,6 +172,10 @@
                                ]];
         
         [clipView addSubview:buttonView];
+        
+        NSLayoutConstraint *widthConstraint = [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.contentView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-buttonView.utilityButtonWidth.floatValue];
+        self.buttonViewWidthConstraints = [self.buttonViewWidthConstraints arrayByAddingObject:widthConstraint];
+        
         [self addConstraints:@[
                                // Pin the button view to the appropriate outer edges of its clipping view.
                                [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:clipView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0],
@@ -174,7 +183,7 @@
                                [NSLayoutConstraint constraintWithItem:buttonView attribute:alignmentAttribute relatedBy:NSLayoutRelationEqual toItem:clipView attribute:alignmentAttribute multiplier:1.0 constant:0.0],
                                
                                // Constrain the maximum button width so that at least a button's worth of contentView is left visible. (The button view will shrink accordingly.)
-                               [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.contentView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-SWUtilityButtonView.utilityButtonWidthDefault],
+                               widthConstraint,
                                ]];
     }
 }
@@ -203,6 +212,7 @@
     _leftUtilityButtons = leftUtilityButtons;
     
     self.leftUtilityButtonsView.utilityButtons = leftUtilityButtons;
+    self.leftUtilityButtonsView.utilityButtonWidth = self.utilityButtonWidth;
     
     [self layoutIfNeeded];
 }
@@ -212,6 +222,20 @@
     _rightUtilityButtons = rightUtilityButtons;
     
     self.rightUtilityButtonsView.utilityButtons = rightUtilityButtons;
+    self.rightUtilityButtonsView.utilityButtonWidth = self.utilityButtonWidth;
+    
+    [self layoutIfNeeded];
+}
+
+- (void)setUtilityButtonWidth:(NSNumber *)utilityButtonWidth
+{
+    _utilityButtonWidth = utilityButtonWidth;
+    self.leftUtilityButtonsView.utilityButtonWidth = utilityButtonWidth;
+    self.rightUtilityButtonsView.utilityButtonWidth = utilityButtonWidth;
+    
+    [self.buttonViewWidthConstraints enumerateObjectsUsingBlock:^(NSLayoutConstraint *constraint, NSUInteger idx, BOOL *stop) {
+        constraint.constant = -[self.buttonViews[idx] utilityButtonWidth].floatValue;
+    }];
     
     [self layoutIfNeeded];
 }
@@ -247,7 +271,7 @@
     {
         self.cellScrollView.contentOffset = [self contentOffsetForCellState:_cellState];
     }
-
+    
     [self updateCellState];
 }
 
@@ -280,10 +304,10 @@
     if ([self.containingTableView.delegate respondsToSelector:@selector(tableView:shouldHighlightRowAtIndexPath:)])
     {
         NSIndexPath *cellIndexPath = [self.containingTableView indexPathForCell:self];
-
+        
         shouldHighlight = [self.containingTableView.delegate tableView:self.containingTableView shouldHighlightRowAtIndexPath:cellIndexPath];
     }
-
+    
     return shouldHighlight;
 }
 
@@ -293,14 +317,14 @@
     {
         [self setHighlighted:YES animated:NO];
     }
-
+    
     else if (gestureRecognizer.state == UIGestureRecognizerStateEnded)
     {
         // Cell is already highlighted; clearing it temporarily seems to address visual anomaly.
         [self setHighlighted:NO animated:NO];
         [self scrollViewTapped:gestureRecognizer];
     }
-
+    
     else if (gestureRecognizer.state == UIGestureRecognizerStateCancelled)
     {
         [self setHighlighted:NO animated:NO];
@@ -421,6 +445,7 @@
     }
 }
 
+
 #pragma mark - Geometry helpers
 
 - (CGFloat)leftUtilityButtonsWidth
@@ -477,12 +502,12 @@
             break;
         }
     }
-
+    
     // Update the clipping on the utility button views according to the current position.
     CGRect frame = [self.contentView.superview convertRect:self.contentView.frame toView:self];
     self.leftUtilityClipConstraint.constant = MAX(0, CGRectGetMinX(frame) - CGRectGetMinX(self.frame));
     self.rightUtilityClipConstraint.constant = MIN(0, CGRectGetMaxX(frame) - CGRectGetMaxX(self.frame));
-
+    
     // Enable or disable the gesture recognizers according to the current mode.
     if (!self.cellScrollView.isDragging && !self.cellScrollView.isDecelerating)
     {
@@ -494,7 +519,7 @@
         self.tapGestureRecognizer.enabled = NO;
         self.longPressGestureRecognizer.enabled = NO;
     }
-
+    
     self.cellScrollView.scrollEnabled = !self.isEditing;
 }
 
